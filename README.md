@@ -8,7 +8,6 @@ Functionality
 -------------
  * Create server type and client type Socket
  * Add message in queue who can be send through socket later
- * Can read the socket and push full messages in a queue who can be recover later
  * Manages the chunk and concatenate them to recreate full message
  * See Socket.hh for other functionality 
 
