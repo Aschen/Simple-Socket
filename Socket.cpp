@@ -151,7 +151,7 @@ bool Socket::stop(void)
     return true;
 }
 
-bool Socket::writeMsg(int fd)
+bool Socket::sendMsg(int fd)
 {
     std::string     frame;
     int             ret = 0;
@@ -210,7 +210,7 @@ bool Socket::writeMsg(int fd)
     return true;
 }
 
-int Socket::readMsg(int fd)
+int Socket::receiveMsg(int fd)
 {
     char            buf[512] = {0};
     int             ret = 0;

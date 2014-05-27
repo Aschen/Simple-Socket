@@ -116,16 +116,16 @@ public:
     /**
      * @brief Ferme la socket
      */
-    bool stop(void);
+    bool		stop(void);
     /**
      * @brief Envoi le premier message de la file dans la socket
      */
-    bool                writeMsg(int fd = -2);
+    bool                sendMsg(int fd = -2);
     /**
      * @brief Lit les données présentes dans la socket et empile un ou plusieurs message
      * @return Retourne -1 en cas d'erreur et 0 si le client est deconnecté
      */
-    int                 readMsg(int fd = -2);
+    int                 receiveMsg(int fd = -2);
     /**
      * @brief Ajoute un message dans la file d'attente d'envoi
      * @param type de message
@@ -156,7 +156,7 @@ public:
     void                setListeningAdress(std::string adress);
     const std::string   &getProtocol(void) const;
     bool                setRemoteIp(std::string remoteIp);
-    const std::string   &getLocalIp(void) const; // TODO setInterface()
+    const std::string   &getLocalIp(void) const;
     const std::string   &getRemoteIp(void);
     int                 getPort(void) const;
     Socket::SocketType  getType(void) const;
@@ -165,7 +165,7 @@ public:
 public:
     std::string         getState(void) const;
     void                dumpReadQueue(void) const;
-    void                dumpWriteQueue(void) const;    
+    void                dumpWriteQueue(void) const;
     int                 getReadQueueSize(void) const;
     int                 getWriteQueueSize(void) const;
     const std::string   &getError(void) const;
