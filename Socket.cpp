@@ -68,7 +68,10 @@ Socket::Socket(int port,
 
 Socket::~Socket(void)
 {
-    stop();
+    if (_type != SERVER_HANDLE)
+    {
+        stop();
+    }
 }
 
 bool Socket::start(void)
@@ -163,22 +166,27 @@ bool Socket::writeMsg(int fd)
     {
         fd = _socket;
     }
-    /* Verification si il y a un message a envoyer */
-    if (_writeQueue.size() == 0)
-    {
-        _error.assign(std::string("No message to send in socket."));
-        return false;
-    }
 
-    /* On verifie si la derniere frame a été entierement envoyée */
+    /* Si il existe un message tronqué */
     if (_tmpWriteBuf.size())
     {
         frame.append(_tmpWriteBuf);
         _tmpWriteBuf.clear();
     }
 
-    /* On transforme le message en frame */
-    messageToFrame(_writeQueue.front(), frame);
+    /* Si il y a un message dans la queue */
+    if (_writeQueue.size())
+    {
+        /* On transforme le message en frame */
+        messageToFrame(_writeQueue.front(), frame);
+    }
+
+    /* Verification si il y a un message a envoyer */
+    if (frame.size() == 0)
+    {
+        _error.assign(std::string("No message to send in socket."));
+        return false;
+    }
 
     /* On envoi le maximum du message dans la socket */
     if ((ret = write(fd, frame.c_str(), frame.size())) < 0)
@@ -321,8 +329,9 @@ bool Socket::getMessage(Message &msg)
     return true;
 }
 
-bool Socket::acceptConnection(int *client_socket, std::string &remoteIp)
+bool Socket::acceptConnection(Socket &socket)
 {
+    int                 client_socket;
     socklen_t           handle_len = 0;
     struct sockaddr_in  handle;
 
@@ -331,13 +340,14 @@ bool Socket::acceptConnection(int *client_socket, std::string &remoteIp)
         _error.assign(std::string("Only server type Socket can accept connection."));
         return false;
     }
-    *client_socket = accept(_socket, (struct sockaddr*)&handle, &handle_len);
-    if (*client_socket < 0)
+    client_socket = accept(_socket, (struct sockaddr*)&handle, &handle_len);
+    if (client_socket < 0)
     {
         _error.assign(std::string("Can't accept new connection : ") + std::string(strerror(errno)));
         return false;
     }
-    remoteIp.assign(inet_ntoa(handle.sin_addr));
+    socket.set(client_socket);
+    socket.setRemoteIp(inet_ntoa(handle.sin_addr));
     return true;
 }
 
@@ -367,6 +377,34 @@ bool Socket::setProtocol(std::string protoName)
     return true;
 }
 
+bool Socket::setInterface(std::string interface)
+{
+    struct ifreq        ifr;
+
+    _ip = "127.0.0.1";
+    _interface = interface;
+    /* Get local ip addr */
+    ifr.ifr_addr.sa_family = _addrFamily;
+    strncpy(ifr.ifr_name, _interface.c_str(), IFNAMSIZ - 1);
+    if (ioctl(_socket, SIOCGIFADDR, &ifr) < 0)
+    {
+        _error.assign(std::string("Invalid interface : " + _interface));
+        return false;
+    }
+    _ip.assign(inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+    return true;
+}
+
+void Socket::setListeningAdress(in_addr_t adress)
+{
+    _listeningAddress = adress;
+}
+
+void Socket::setListeningAdress(std::string adress)
+{
+    _listeningAddress = inet_addr(adress.c_str());
+}
+
 const std::string &Socket::getProtocol(void) const
 {
     return _protoName;
@@ -383,22 +421,8 @@ bool Socket::setRemoteIp(std::string remoteIp)
     return true;
 }
 
-const std::string &Socket::getLocalIp(void)
+const std::string &Socket::getLocalIp(void) const
 {
-    struct ifreq        ifr;
-
-    /* Get local ip addr */
-    ifr.ifr_addr.sa_family = _addrFamily;
-    strncpy(ifr.ifr_name, _interface.c_str(), IFNAMSIZ - 1);
-    if (ioctl(_socket, SIOCGIFADDR, &ifr) < 0)
-    {
-        _error.assign(std::string("Invalid interface : " + _interface));
-        _ip = "127.0.0.1";
-    }
-    else
-    {
-        _ip.assign(inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
-    }
     return _ip;
 }
 

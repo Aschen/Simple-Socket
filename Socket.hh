@@ -139,7 +139,7 @@ public:
     /**
      * @brief Accepte une nouvelle connection depuis la socket (SERVER uniquement)
      */
-    bool                acceptConnection(int *client_socket, std::string &remoteIp);
+    bool                acceptConnection(Socket &socket);
 
 private:
     void                pushFrame(std::string &frames);
@@ -151,9 +151,12 @@ public:
     bool                set(int socket);
     bool                setOption(int optName, int level = SOL_SOCKET);
     bool                setProtocol(std::string protoName);
+    bool                setInterface(std::string interface);
+    void                setListeningAdress(in_addr_t adress);
+    void                setListeningAdress(std::string adress);
     const std::string   &getProtocol(void) const;
     bool                setRemoteIp(std::string remoteIp);
-    const std::string   &getLocalIp(void);
+    const std::string   &getLocalIp(void) const; // TODO setInterface()
     const std::string   &getRemoteIp(void);
     int                 getPort(void) const;
     Socket::SocketType  getType(void) const;
@@ -162,7 +165,7 @@ public:
 public:
     std::string         getState(void) const;
     void                dumpReadQueue(void) const;
-    void                dumpWriteQueue(void) const;
+    void                dumpWriteQueue(void) const;    
     int                 getReadQueueSize(void) const;
     int                 getWriteQueueSize(void) const;
     const std::string   &getError(void) const;
