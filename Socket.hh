@@ -81,6 +81,11 @@ private:
     Socket(int socket, std::string remoteIp);
 
     /**
+     * @brief Créer une socket pour communiquer avec les clients connectés au serveur (accept)
+     */
+    Socket(void);
+
+    /**
      * @brief Créer une socket d'écoute en personnalisant les options
      */
     Socket(int port,
@@ -99,6 +104,9 @@ private:
            std::string protoName,
            int communicationType,
            std::string interface);
+private:
+    Socket(const Socket &cpy);
+    Socket      &operator=(const Socket &cpy);
 
 public:
     /**
@@ -128,6 +136,10 @@ public:
      * @brief Renvoi le premier message présent dans la file des messages recus
      */
     bool                getMessage(Message &msg);
+    /**
+     * @brief Accepte une nouvelle connection depuis la socket (SERVER uniquement)
+     */
+    bool                acceptConnection(int *client_socket, std::string &remoteIp);
 
 private:
     void                pushFrame(std::string &frames);
@@ -136,10 +148,12 @@ private:
     /* Getters/Setters*/
 public:
     int                 get(void);
+    bool                set(int socket);
     bool                setOption(int optName, int level = SOL_SOCKET);
     bool                setProtocol(std::string protoName);
     const std::string   &getProtocol(void) const;
-    const std::string   &getLocalIp(std::string interface = "");
+    bool                setRemoteIp(std::string remoteIp);
+    const std::string   &getLocalIp(void);
     const std::string   &getRemoteIp(void);
     int                 getPort(void) const;
     Socket::SocketType  getType(void) const;
@@ -148,7 +162,7 @@ public:
 public:
     std::string         getState(void) const;
     void                dumpReadQueue(void) const;
-    void                dumpWriteQueue(void) const;    
+    void                dumpWriteQueue(void) const;
     int                 getReadQueueSize(void) const;
     int                 getWriteQueueSize(void) const;
     const std::string   &getError(void) const;

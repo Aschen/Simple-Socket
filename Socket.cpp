@@ -28,6 +28,15 @@ Socket::Socket(int socket, std::string remoteIp)
 {
 }
 
+Socket::Socket(void)
+    : _port(-1), _addrFamily(AF_INET), _protoName("TCP"),
+      _communicationType(SOCK_STREAM), _interface("wlan0"),
+      _listeningAddress(-1), _maxConnections(-1),
+      _protocol(NULL), _socket(-1), _ip("127.0.0.1"), _type(Socket::SERVER_HANDLE),
+      _remoteIp(""), _active(false)
+{
+}
+
 Socket::Socket(int port,
                in_addr_t listeningAdress,
                sa_family_t addrFamily,
@@ -64,7 +73,6 @@ Socket::~Socket(void)
 
 bool Socket::start(void)
 {
-    int                 t = 1;
     struct sockaddr_in  sin;
 
     if (_type == Socket::SERVER_HANDLE)
@@ -313,6 +321,26 @@ bool Socket::getMessage(Message &msg)
     return true;
 }
 
+bool Socket::acceptConnection(int *client_socket, std::string &remoteIp)
+{
+    socklen_t           handle_len = 0;
+    struct sockaddr_in  handle;
+
+    if (_type != Socket::SERVER)
+    {
+        _error.assign(std::string("Only server type Socket can accept connection."));
+        return false;
+    }
+    *client_socket = accept(_socket, (struct sockaddr*)&handle, &handle_len);
+    if (*client_socket < 0)
+    {
+        _error.assign(std::string("Can't accept new connection : ") + std::string(strerror(errno)));
+        return false;
+    }
+    remoteIp.assign(inet_ntoa(handle.sin_addr));
+    return true;
+}
+
 bool Socket::setOption(int optName, int level)
 {
     int                 t = 1;
@@ -344,7 +372,18 @@ const std::string &Socket::getProtocol(void) const
     return _protoName;
 }
 
-const std::string &Socket::getLocalIp(std::string interface)
+bool Socket::setRemoteIp(std::string remoteIp)
+{
+    if (_type != Socket::SERVER_HANDLE || _remoteIp.size())
+    {
+        _error.assign(std::string("You can't change your remote ip."));
+        return false;
+    }
+    _remoteIp = remoteIp;
+    return true;
+}
+
+const std::string &Socket::getLocalIp(void)
 {
     struct ifreq        ifr;
 
@@ -379,6 +418,22 @@ int Socket::get(void)
         _error.assign(std::string("Socket is not running."));
     }
     return _socket;
+}
+
+bool Socket::set(int socket)
+{
+    if (_type != SERVER_HANDLE)
+    {
+        _error.assign(std::string("Use start() to open socket."));
+        return false;
+    }
+    if (_active == false)
+    {
+        _socket = socket;
+        _active = true;
+        return true;
+    }
+    return false;
 }
 
 int Socket::getPort(void) const
