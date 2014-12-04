@@ -18,6 +18,8 @@ Informations
 
  * If a function fail and return false, you can get the last error with getError()
 
+ * Default network interface is wlan0
+
 Examples
 --------
 See main_server.cpp and main_client.cpp for exemple of utilisation.
